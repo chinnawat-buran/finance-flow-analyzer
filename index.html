@@ -5,43 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finance Flow Analyzer</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Finance Flow Analyzer</h1>
+            <h1>Finance Flow 📊</h1>
             <p>เปลี่ยนรายการเดินบัญชีให้เป็นข้อมูลเชิงธุรกิจ</p>
         </header>
 
         <main>
-            <section class="upload-section">
-                <input type="file" id="csvFile" accept=".csv">
-                <button id="analyzeBtn">วิเคราะห์ข้อมูล</button>
+            <section class="upload-section card">
+                <div class="upload-container">
+                    <label for="csvFile" class="btn-outline">
+                        📁 เลือกไฟล์ Bank Statement (CSV)
+                    </label>
+                    <input type="file" id="csvFile" accept=".csv" hidden>
+                    <span id="fileNameDisplay" class="text-muted">ยังไม่ได้เลือกไฟล์...</span>
+                </div>
+                <button id="analyzeBtn" class="btn-primary">วิเคราะห์ Insight การเงิน</button>
             </section>
 
             <section class="dashboard">
-                <div class="card">
+                <div class="card summary-card income">
                     <h3>รายรับรวม</h3>
-                    <p id="totalIncome">฿0</p>
+                    <p id="totalIncome">฿0.00</p>
                 </div>
-                <div class="card">
+                <div class="card summary-card expense">
                     <h3>รายจ่ายรวม</h3>
-                    <p id="totalExpense">฿0</p>
+                    <p id="totalExpense">฿0.00</p>
                 </div>
             </section>
 
-            <section class="results">
-                <table id="resultTable">
-                    <thead>
-                        <tr>
-                            <th>วันที่</th>
-                            <th>รายการ</th>
-                            <th>หมวดหมู่</th>
-                            <th>จำนวนเงิน</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <section class="results card">
+                <h2>รายละเอียดธุรกรรม</h2>
+                <div class="table-responsive">
+                    <table id="resultTable">
+                        <thead>
+                            <tr>
+                                <th>วันที่</th>
+                                <th>รายละเอียด</th>
+                                <th>หมวดหมู่</th>
+                                <th>จำนวนเงิน</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="emptyState">
+                                <td colspan="4" class="text-center text-muted">อัปโหลดไฟล์ CSV เพื่อดูข้อมูลการวิเคราะห์</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </main>
     </div>
