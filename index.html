@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Flow Analyzer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Finance Flow Analyzer</h1>
+            <p>เปลี่ยนรายการเดินบัญชีให้เป็นข้อมูลเชิงธุรกิจ</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <input type="file" id="csvFile" accept=".csv">
+                <button id="analyzeBtn">วิเคราะห์ข้อมูล</button>
+            </section>
+
+            <section class="dashboard">
+                <div class="card">
+                    <h3>รายรับรวม</h3>
+                    <p id="totalIncome">฿0</p>
+                </div>
+                <div class="card">
+                    <h3>รายจ่ายรวม</h3>
+                    <p id="totalExpense">฿0</p>
+                </div>
+            </section>
+
+            <section class="results">
+                <table id="resultTable">
+                    <thead>
+                        <tr>
+                            <th>วันที่</th>
+                            <th>รายการ</th>
+                            <th>หมวดหมู่</th>
+                            <th>จำนวนเงิน</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
