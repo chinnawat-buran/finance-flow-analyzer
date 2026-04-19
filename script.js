@@ -9,10 +9,14 @@ const formatCurrency = (amount) => {
 
 // ระบบ Categorize เบื้องต้น (จำลองการทำงานของ AI)
 const autoCategorize = (desc) => {
+    if (!desc) return '📦 อื่นๆ';
+
     const d = desc.toLowerCase();
+
     if (d.includes('7-11') || d.includes('food') || d.includes('starbucks')) return '🍔 อาหาร/เครื่องดื่ม';
     if (d.includes('grab') || d.includes('taxi') || d.includes('ptt')) return '🚗 เดินทาง';
     if (d.includes('salary') || d.includes('เงินเดือน')) return '💰 รายรับ';
+
     return '📦 อื่นๆ';
 };
 
@@ -53,35 +57,118 @@ analyzeBtn.addEventListener('click', () => {
 });
 
 // ฟังก์ชันหลัก: ประมวลผลข้อมูล
+function parseCSV(csvText) {
+    const result = Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true
+    });
+
+    return result.data;
+}
+
 function processData(csvText) {
-    const lines = csvText.trim().split('\n');
-    if (lines.length < 2) throw new Error("ไฟล์ไม่มีข้อมูล หรือไม่ใช่ฟอร์แมตที่ถูกต้อง");
+    const rawData = parseCSV(csvText);
+    if (rawData.length < 1) throw new Error("ไฟล์ไม่มีข้อมูล หรือไม่ใช่ฟอร์แมตที่ถูกต้อง");
 
-    const tbody = document.querySelector('#resultTable tbody');
-    tbody.innerHTML = ''; // ล้างตาราง
+    const data = normalizeData(rawData);
+    console.log(data);
+    console.log("RAW:", rawData);
+    console.log("NORMALIZED:", data);
 
+    // 1. คำนวณ
+    const summary = calculateSummary(data);
+
+    // 2. render table
+    renderTable(data);
+    renderChart(data);
+
+    // 3. update dashboard
+    document.getElementById('totalIncome').innerText = formatCurrency(summary.totalIncome);
+    document.getElementById('totalExpense').innerText = formatCurrency(summary.totalExpense);
+}
+
+// สร้าง function ทำข้อมูลกราฟ
+function prepareChartData(data) {
+    const categoryMap = {};
+
+    data.forEach(item => {
+        const amount = item.amount;
+        if (amount >= 0) return; // เอาเฉพาะรายจ่าย
+
+        const category = autoCategorize(item.desc);
+
+        if (!categoryMap[category]) {
+            categoryMap[category] = 0;
+        }
+
+        categoryMap[category] += Math.abs(amount);
+    });
+
+    return categoryMap;
+}
+
+// สร้าง function render chart
+let chartInstance = null;
+
+function renderChart(data) {
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+
+    const chartData = prepareChartData(data);
+
+    const labels = Object.keys(chartData);
+    const values = Object.values(chartData);
+    if (values.length === 0) {
+    console.warn("ไม่มีข้อมูลรายจ่ายสำหรับกราฟ");
+    return;
+}
+
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: [
+                    '#4f46e5',
+                    '#10b981',
+                    '#f59e0b',
+                    '#ef4444',
+                    '#6366f1'
+                ]
+            }]
+        }
+    });
+} // 
+
+function calculateSummary(data) {
     let totalIncome = 0;
     let totalExpense = 0;
 
-    // ลูปอ่านข้อมูล (เริ่มที่ 1 เพื่อข้าม Header บรรทัดแรก)
-    for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
+    data.forEach(item => {
+        const amount = item.amount;
 
-        const columns = line.split(',');
-        if (columns.length < 3) continue;
+        if (isNaN(amount)) return;
 
-        const date = columns[0];
-        const desc = columns[1];
-        const amount = parseFloat(columns[2]);
-
-        if (isNaN(amount)) continue;
-
-        // แยกคำนวณรายรับ-รายจ่าย
         if (amount > 0) totalIncome += amount;
         else totalExpense += Math.abs(amount);
+    });
 
-        // สร้างแถวตาราง
+    return { totalIncome, totalExpense };
+}
+
+function renderTable(data) {
+    const tbody = document.querySelector('#resultTable tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(item => {
+        const { date, desc, amount } = item;
+
+        if (isNaN(amount)) return;
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${date}</td>
@@ -91,10 +178,25 @@ function processData(csvText) {
                 ${amount > 0 ? '+' : ''}${formatCurrency(amount)}
             </td>
         `;
-        tbody.appendChild(tr);
-    }
 
-    // อัปเดต Dashboard
-    document.getElementById('totalIncome').innerText = formatCurrency(totalIncome);
-    document.getElementById('totalExpense').innerText = formatCurrency(totalExpense);
+        tbody.appendChild(tr);
+    });
 }
+
+function normalizeData(rawData) {
+    return rawData.map(item => {
+        const date = item["Date"] || item["วันที่"] || "-";
+        const desc = item["Description"] || item["รายละเอียด"] || "-";
+
+        const cleanNumber = (val) => parseFloat((val || "0").toString().replace(/,/g, ''));
+
+        const debit = cleanNumber(item["Debit"] || item["ถอน"]);
+        const credit = cleanNumber(item["Credit"] || item["ฝาก"]);
+
+        return {
+            date,
+            desc,
+            amount: credit - debit
+        };
+    });
+} 
